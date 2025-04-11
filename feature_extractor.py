@@ -4,17 +4,7 @@ import dlib
 import cv2
 
 class FeatureExtractor:
-    """
-    Class for extracting face features using a neural network model
-    """
-    
     def __init__(self, model_path="../models/"):
-        """
-        Initialize face recognition model
-        
-        Args:
-            model_path: Path to the model directory
-        """
         # Load dlib face recognition model
         recognition_model_path = os.path.join(model_path, "facenet.pb")
         self.face_recognition_model = dlib.face_recognition_model_v1(recognition_model_path)
@@ -24,7 +14,6 @@ class FeatureExtractor:
         self.shape_predictor = None
     
     def _ensure_detector_loaded(self, model_path="../models/"):
-        """Ensure face detector is loaded if needed"""
         if self.face_detector is None:
             self.face_detector = dlib.get_frontal_face_detector()
             
@@ -32,16 +21,6 @@ class FeatureExtractor:
             self.shape_predictor = dlib.shape_predictor(predictor_path)
     
     def compute_feature_vector(self, image, face_rect=None):
-        """
-        Compute feature vector for a face image
-        
-        Args:
-            image: Input face image
-            face_rect: Optional face rectangle if image contains more than the face
-            
-        Returns:
-            128-dimensional feature vector
-        """
         # Convert to RGB if needed
         if len(image.shape) == 3 and image.shape[2] == 3:
             rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -78,15 +57,6 @@ class FeatureExtractor:
         return np.array(face_descriptor)
     
     def extract_features_from_image(self, image_path):
-        """
-        Extract features from all faces in an image
-        
-        Args:
-            image_path: Path to input image
-            
-        Returns:
-            List of (face_rect, feature_vector) tuples
-        """
         # Load image
         image = cv2.imread(image_path)
         if image is None:
@@ -120,16 +90,6 @@ class FeatureExtractor:
         return results
     
     def compute_similarity(self, feature1, feature2):
-        """
-        Compute similarity between two feature vectors
-        
-        Args:
-            feature1: First feature vector
-            feature2: Second feature vector
-            
-        Returns:
-            Similarity score (0-1), higher means more similar
-        """
         # Calculate Euclidean distance
         distance = np.linalg.norm(feature1 - feature2)
         

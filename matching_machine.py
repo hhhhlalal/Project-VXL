@@ -4,46 +4,18 @@ import cv2
 from typing import List, Dict
 
 class FaceMatcher:
-    """
-    Class for matching faces against a database of known faces
-    """
-    
     def __init__(self, feature_extractor, threshold=0.6):
-        """
-        Initialize face matcher
-        
-        Args:
-            feature_extractor: FeatureExtractor instance
-            threshold: Similarity threshold for face matching (0-1)
-        """
         self.feature_extractor = feature_extractor
         self.threshold = threshold
         self.known_faces = {}  # name -> list of feature vectors
     
     def add_known_face(self, name, feature_vector):
-        """
-        Add a known face to the matcher
-        
-        Args:
-            name: Person's name
-            feature_vector: Face feature vector
-        """
         if name not in self.known_faces:
             self.known_faces[name] = []
         
         self.known_faces[name].append(feature_vector)
     
     def add_known_face_from_image(self, name, image_path):
-        """
-        Add a known face from an image
-        
-        Args:
-            name: Person's name
-            image_path: Path to face image
-            
-        Returns:
-            Number of faces added
-        """
         # Extract features from image
         results = self.feature_extractor.extract_features_from_image(image_path)
         
@@ -54,16 +26,6 @@ class FaceMatcher:
         return len(results)
     
     def load_known_faces_directory(self, directory):
-        """
-        Load known faces from a directory structure
-        Directory structure should be: directory/person_name/image_files
-        
-        Args:
-            directory: Root directory for known faces
-            
-        Returns:
-            Number of faces loaded
-        """
         total_faces = 0
         
         # Iterate through person directories
@@ -88,15 +50,6 @@ class FaceMatcher:
         return total_faces
     
     def match_face(self, feature_vector):
-        """
-        Match a face against known faces
-        
-        Args:
-            feature_vector: Feature vector to match
-            
-        Returns:
-            Tuple (name, confidence) of best match, or ("Unknown", 0) if no match
-        """
         best_match = "Unknown"
         best_confidence = 0
         
@@ -117,15 +70,6 @@ class FaceMatcher:
         return best_match, best_confidence
     
     def recognize_faces_in_image(self, image_path):
-        """
-        Recognize all faces in an image
-        
-        Args:
-            image_path: Path to input image
-            
-        Returns:
-            List of (face_rect, name, confidence) tuples
-        """
         # Extract features from image
         face_features = self.feature_extractor.extract_features_from_image(image_path)
         

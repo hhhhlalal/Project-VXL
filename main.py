@@ -10,7 +10,6 @@ from matching_machine import FaceMatcher
 from database import FaceDatabase
 
 def load_config(config_path="../config/settings.json"):
-    """Load configuration from JSON file"""
     try:
         with open(config_path, 'r') as f:
             config = json.load(f)
@@ -27,7 +26,6 @@ def load_config(config_path="../config/settings.json"):
         }
 
 def process_known_faces(config):
-    """Process known faces and add to database"""
     print("Processing known faces...")
     
     # Initialize components
@@ -72,7 +70,6 @@ def process_known_faces(config):
     return total_processed
 
 def recognize_unknown_faces(config):
-    """Recognize faces in the unknown_faces directory"""
     print("Recognizing unknown faces...")
     
     # Initialize components
@@ -146,11 +143,6 @@ def recognize_unknown_faces(config):
                             "confidence": float(confidence),
                             "position": face_rect
                         }
-                        {
-                            "name": name,
-                            "confidence": float(confidence),
-                            "position": face_rect
-                        }
                         for face_rect, name, confidence in recognition_results
                     ]
                 })
@@ -161,7 +153,6 @@ def recognize_unknown_faces(config):
     return results
 
 def main():
-    """Main function to run face recognition system"""
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="Face Recognition System")
     parser.add_argument("--config", default="../config/settings.json", help="Path to configuration file")
