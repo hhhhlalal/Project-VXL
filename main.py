@@ -1,75 +1,148 @@
-if __name__ == "__main__":
-    # Create a database instance
-    db = FaceFeaturesDB("face_features.db")
+import os
+import sys
+import cv2
+import numpy as np
+import json
+import argparse
+from face_extractor import FaceExtractor
+from feature_extractor import FeatureExtractor
+from matching_machine import FaceMatcher
+from database import FaceDatabase
+
+def load_config(config_path="../config/settings.json"):
+    """Load configuration from JSON file"""
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+        return config
+    except Exception as e:
+        print(f"Error loading config: {e}")
+        # Return default config
+        return {
+            "db_path": "face_features.db",
+            "known_faces_dir": "../data/known_faces",
+            "unknown_faces_dir": "../data/unknown_faces",
+            "models_dir": "../models",
+            "matching_threshold": 0.6
+        }
+
+def process_known_faces(config):
+    """Process known faces and add to database"""
+    print("Processing known faces...")
     
-    # Check if dlib is installed and models can be loaded
-    if db.has_dlib:
-        print("Dlib is ready and models are loaded")
+    # Initialize components
+    face_extractor = FaceExtractor(model_path=config["models_dir"])
+    feature_extractor = FeatureExtractor(model_path=config["models_dir"])
+    db = FaceDatabase(db_path=config["db_path"])
+    
+    # Process each person's directory
+    known_faces_dir = config["known_faces_dir"]
+    total_processed = 0
+    
+    for person_name in os.listdir(known_faces_dir):
+        person_dir = os.path.join(known_faces_dir, person_name)
         
-        # Example of adding a face from an image
-        print("Example face recognition from webcam:")
-        print("1. Press 'a' to add a new face (you will be asked to enter a name)")
-        print("2. Press 'q' to quit")
+        if not os.path.isdir(person_dir):
+            continue
         
-        cap = cv2.VideoCapture(0)
+        print(f"Processing person: {person_name}")
+        person_faces = 0
         
-        if not cap.isOpened():
-            print("Cannot open webcam")
-        else:
-            while True:
-                ret, frame = cap.read()
+        # Process each image
+        for image_file in os.listdir(person_dir):
+            if image_file.lower().endswith(('.jpg', '.jpeg', '.png')):
+                image_path = os.path.join(person_dir, image_file)
                 
-                if not ret:
-                    print("Cannot read frame from webcam")
-                    break
-                
-                # Display original frame
-                cv2.imshow("Webcam", frame)
-                
-                # Detect faces
-                faces = db.extractor.detect_faces(frame)
-                
-                # Draw bounding boxes and labels
-                for x, y, w, h in faces:
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                
-                # Display frame with bounding boxes
-                cv2.imshow("Detected Faces", frame)
-                
-                key = cv2.waitKey(1)
-                
-                # Press 'a' to add a face
-                if key == ord('a'):
-                    # Detect faces
-                    faces = db.extractor.detect_faces(frame)
+                try:
+                    # Extract features
+                    results = feature_extractor.extract_features_from_image(image_path)
                     
-                    if len(faces) > 0:
-                        name = input("Enter name for this face: ")
+                    # Add to database
+                    for _, feature_vector in results:
+                        db.add_face(person_name, feature_vector, image_path)
+                        person_faces += 1
+                        total_processed += 1
                         
-                        # Add face to database
-                        ids = db.add_face_from_image(name, frame)
-                        print(f"Added {len(ids)} faces with name '{name}'")
-                    else:
-                        print("No faces detected")
-                
-                # Press 'q' to quit
-                elif key == ord('q'):
-                    break
+                except Exception as e:
+                    print(f"Error processing {image_path}: {e}")
+        
+        print(f"  Added {person_faces} faces for {person_name}")
+    
+    print(f"Total faces processed: {total_processed}")
+    return total_processed
+
+def recognize_unknown_faces(config):
+    """Recognize faces in the unknown_faces directory"""
+    print("Recognizing unknown faces...")
+    
+    # Initialize components
+    feature_extractor = FeatureExtractor(model_path=config["models_dir"])
+    db = FaceDatabase(db_path=config["db_path"])
+    
+    # Create face matcher
+    matcher = FaceMatcher(
+        feature_extractor=feature_extractor,
+        threshold=config["matching_threshold"]
+    )
+    
+    # Load known faces from database
+    all_faces = db.get_all_faces()
+    for face_id, name, feature_vector, _ in all_faces:
+        matcher.add_known_face(name, feature_vector)
+    
+    print(f"Loaded {len(all_faces)} known faces")
+    
+    # Process unknown faces
+    unknown_dir = config["unknown_faces_dir"]
+    results = []
+    
+    for image_file in os.listdir(unknown_dir):
+        if image_file.lower().endswith(('.jpg', '.jpeg', '.png')):
+            image_path = os.path.join(unknown_dir, image_file)
             
-            cap.release()
-            cv2.destroyAllWindows()
-    else:
-        print("Dlib is not available or models could not be loaded")
-        
-        # Use basic functions that don't depend on dlib
-        # Example feature vector (128-dimensional vector commonly used in face recognition)
-        example_vector = np.random.rand(128)
-        
-        # Add a face to the database
-        face_id = db.add_face("John Doe", example_vector)
-        print(f"Added face with ID: {face_id}")
-        
-        # Retrieve face by ID
-        name, vector = db.get_feature_by_id(face_id)
-        print(f"Retrieved face: {name}")
-        print(f"Vector shape: {vector.shape}")
+            try:
+                # Load image
+                image = cv2.imread(image_path)
+                if image is None:
+                    print(f"Could not load image: {image_path}")
+                    continue
+                
+                # Recognize faces
+                recognition_results = matcher.recognize_faces_in_image(image_path)
+                
+                # Draw results on image
+                result_image = image.copy()
+                
+                for face_rect, name, confidence in recognition_results:
+                    x, y, w, h = face_rect
+                    
+                    # Draw rectangle
+                    if name == "Unknown":
+                        color = (0, 0, 255)  # Red for unknown
+                    else:
+                        color = (0, 255, 0)  # Green for known
+                    
+                    cv2.rectangle(result_image, (x, y), (x + w, y + h), color, 2)
+                    
+                    # Draw label
+                    label = f"{name} ({confidence:.2f})"
+                    cv2.putText(
+                        result_image, label, (x, y - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2
+                    )
+                
+                # Save result image
+                base_name = os.path.basename(image_path)
+                result_path = os.path.join(unknown_dir, "result_" + base_name)
+                cv2.imwrite(result_path, result_image)
+                
+                print(f"Processed {image_path} - Found {len(recognition_results)} faces")
+                results.append({
+                    "image": image_path,
+                    "result_image": result_path,
+                    "faces": [
+                        {
+                            "name": name,
+                            "confidence": float(confidence),
+                            "position": face_rect
+                        }
