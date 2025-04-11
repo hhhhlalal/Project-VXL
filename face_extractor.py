@@ -4,17 +4,7 @@ import numpy as np
 import dlib
 
 class FaceExtractor:
-    """
-    Class for extracting faces from images
-    """
-    
     def __init__(self, model_path="../models/"):
-        """
-        Initialize face detector
-        
-        Args:
-            model_path: Path to the model directory
-        """
         # Initialize face detector (HOG-based)
         self.face_detector = dlib.get_frontal_face_detector()
         
@@ -23,15 +13,6 @@ class FaceExtractor:
         self.shape_predictor = dlib.shape_predictor(predictor_path)
     
     def detect_faces(self, image):
-        """
-        Detect all faces in an image
-        
-        Args:
-            image: Input image (OpenCV format)
-            
-        Returns:
-            List of face rectangles (x, y, w, h)
-        """
         # Convert to RGB if needed (dlib expects RGB)
         if len(image.shape) == 3 and image.shape[2] == 3:
             rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -53,17 +34,6 @@ class FaceExtractor:
         return face_rects
     
     def extract_face(self, image, face_rect, target_size=(150, 150)):
-        """
-        Extract and normalize a face from an image
-        
-        Args:
-            image: Input image
-            face_rect: Face rectangle (x, y, w, h)
-            target_size: Size to resize extracted face
-            
-        Returns:
-            Extracted face image
-        """
         x, y, w, h = face_rect
         
         # Add some margin
@@ -85,16 +55,6 @@ class FaceExtractor:
         return face_img
     
     def get_landmarks(self, image, face_rect):
-        """
-        Get facial landmarks for a face
-        
-        Args:
-            image: Input image
-            face_rect: Face rectangle (x, y, w, h)
-            
-        Returns:
-            Array of facial landmark coordinates
-        """
         # Convert to RGB if needed
         if len(image.shape) == 3 and image.shape[2] == 3:
             rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -116,17 +76,6 @@ class FaceExtractor:
         return np.array(landmarks)
     
     def align_face(self, image, landmarks, target_size=(150, 150)):
-        """
-        Align face based on facial landmarks
-        
-        Args:
-            image: Input image
-            landmarks: Facial landmarks
-            target_size: Size to resize aligned face
-            
-        Returns:
-            Aligned face image
-        """
         # Define reference points (eyes corners)
         left_eye = np.mean(landmarks[36:42], axis=0)
         right_eye = np.mean(landmarks[42:48], axis=0)
@@ -157,17 +106,6 @@ class FaceExtractor:
         return aligned_face
     
     def process_image(self, image_path, output_dir=None, align=True):
-        """
-        Process an image to extract all faces
-        
-        Args:
-            image_path: Path to input image
-            output_dir: Directory to save extracted faces (optional)
-            align: Whether to align faces using landmarks
-            
-        Returns:
-            List of extracted face images
-        """
         # Load image
         image = cv2.imread(image_path)
         if image is None:
