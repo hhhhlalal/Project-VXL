@@ -146,3 +146,42 @@ def recognize_unknown_faces(config):
                             "confidence": float(confidence),
                             "position": face_rect
                         }
+                        {
+                            "name": name,
+                            "confidence": float(confidence),
+                            "position": face_rect
+                        }
+                        for face_rect, name, confidence in recognition_results
+                    ]
+                })
+                
+            except Exception as e:
+                print(f"Error processing {image_path}: {e}")
+    
+    return results
+
+def main():
+    """Main function to run face recognition system"""
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="Face Recognition System")
+    parser.add_argument("--config", default="../config/settings.json", help="Path to configuration file")
+    parser.add_argument("--mode", choices=["train", "recognize", "both"], default="both", 
+                        help="Mode of operation: train, recognize, or both")
+    args = parser.parse_args()
+    
+    # Load configuration
+    config = load_config(args.config)
+    
+    # Process according to mode
+    if args.mode in ["train", "both"]:
+        processed = process_known_faces(config)
+        print(f"Training complete. Processed {processed} faces.")
+    
+    if args.mode in ["recognize", "both"]:
+        results = recognize_unknown_faces(config)
+        print(f"Recognition complete. Processed {len(results)} images.")
+    
+    print("Done.")
+
+if __name__ == "__main__":
+    main()
