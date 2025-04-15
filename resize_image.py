@@ -6,9 +6,9 @@ from PIL import Image
 #Nhận dạng mặt người
 recognizer = cv2.face.LBPHFaceRecognizer_create()
 # đường dẫn để set ảnh
-path = '"D:/Project VXL/dataset"'
+path = 'D:/Project VXL/dataset'
 #đường dẫn để lưu ảnh đã set
-path_save = '"D:/Project VXL/dataset_save"'
+path_save = 'D:/Project VXL/dataset_save'
 
 
 #trả về một danh sách chứa tên của các mục trong thư mục được cung cấp bởi đường dẫn
