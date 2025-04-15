@@ -1,7 +1,7 @@
 import cv2
 import numpy as numpy
 
-faceDetect = cv2.CascadeClassifier('C:/Users/Thai Hoang/OneDrive/Máy tính/Face_recognition/Face-Recognition-Using-SVM-master/haarcascade_frontalface_default.xml')
+faceDetect = cv2.CascadeClassifier('"D:/Project VXL/haarcascade_frontalface_default.xml"')
 cam = cv2.VideoCapture(0)
 
 id = input('Enter ID : ')
