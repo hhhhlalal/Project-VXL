@@ -21,7 +21,7 @@ dataset_dir = "dataset"
 user_folder = os.path.join(dataset_dir, f"{user_name}_{user_id}")
 os.makedirs(user_folder, exist_ok=True)
 
-max_images = 100
+max_images = 200
 count = 0
 
 while True:
@@ -36,14 +36,14 @@ while True:
     for (x, y, w, h) in faces:
         count += 1
         face_img = gray[y:y+h, x:x+w]
-        face_img = cv2.resize(face_img, (200, 200))
+        face_img = cv2.resize(face_img, (250, 250))
 
         filename = os.path.join(user_folder, f"User.{user_id}.{count}.jpg")
         cv2.imwrite(filename, face_img)
 
         cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
         cv2.putText(frame, f"{count}/{max_images}", (x, y-10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 2)
 
     cv2.imshow("Add Face", frame)
 
@@ -75,7 +75,7 @@ for user_folder in os.listdir(source_dir):
             print(f"Lỗi đọc ảnh: {img_path}")
             continue
 
-        resized = cv2.resize(img, (200, 200))
+        resized = cv2.resize(img, (250, 250))
         save_file = os.path.join(save_path, f"resized_{file}")
         cv2.imwrite(save_file, resized)
 
